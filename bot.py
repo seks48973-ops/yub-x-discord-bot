@@ -27,19 +27,24 @@ async def on_message(message: discord.Message):
         return
 
     content = message.content.strip()
+    debug_info = []
 
     if "links.lootlabs.gg" in content and "zoaTgCxk" in content:
+        debug_info.append("✅ Detected valid YuB-X lootlabs link")
+
         try:
-            # More flexible sub_id extraction
+            # Debug: Show first part of the link
+            debug_info.append(f"Link length: {len(content)} characters")
+
+            # Try to find sub_id
             sub_id_match = re.search(r'sub_id=([^&\s]+)', content)
-            
-            if not sub_id_match:
-                # Try alternative patterns
-                sub_id_match = re.search(r'[?&]sub_id=([^&\s]+)', content)
             
             if sub_id_match:
                 sub_id = sub_id_match.group(1)
+                debug_info.append(f"✅ Extracted sub_id (length: {len(sub_id)})")
+                
                 key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
+                debug_info.append("✅ Built key URL")
 
                 embed = discord.Embed(
                     title="YuB-X Key System",
@@ -48,12 +53,15 @@ async def on_message(message: discord.Message):
                 )
 
                 await message.reply(embed=embed, view=KeyButtonView(key_url))
+                return
             else:
-                await message.reply("Found lootlabs link but could not extract `sub_id`.")
+                debug_info.append("❌ Could not find sub_id with regex")
+
+            await message.reply("\n".join(debug_info))
 
         except Exception as e:
-            await message.reply("Error processing the link.")
-            print(f"Error: {e}")
+            debug_info.append(f"❌ Error: {str(e)[:300]}")
+            await message.reply("\n".join(debug_info))
 
     elif "links.lootlabs.gg" in content:
         await message.reply("Not YuB-X keysystem, please try again.")
