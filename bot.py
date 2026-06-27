@@ -8,41 +8,51 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+class KeyButtonView(discord.ui.View):
+    def __init__(self, key_url: str):
+        super().__init__(timeout=300)
+        self.add_item(discord.ui.Button(
+            label="Get YuB-X Key",
+            style=discord.ButtonStyle.green,
+            url=key_url
+        ))
+
 @bot.event
 async def on_ready():
     print(f"Bot is online as {bot.user}")
 
-@bot.command(name="bypass")
-async def bypass(ctx, *, link: str = None):
-    if not link:
-        await ctx.reply("Usage: `!bypass [full link]`")
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
         return
 
-    if "zoaTgCxk" not in link:
-        await ctx.reply("Not YuB-X keysystem, please try again.")
-        return
+    content = message.content
 
-    try:
-        sub_id_match = re.search(r'sub_id=([^&\s]+)', link)
-        
-        if sub_id_match:
-            sub_id = sub_id_match.group(1)
+    # Auto-detect lootlabs links
+    if "links.lootlabs.gg" in content and "zoaTgCxk" in content:
+        try:
+            # Extract sub_id
+            sub_id_match = re.search(r'sub_id=([^&\s]+)', content)
             
-            key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
+            if sub_id_match:
+                sub_id = sub_id_match.group(1)
+                key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
 
-            embed = discord.Embed(
-                title="YuB-X Key System",
-                description="Here is your bypass link:",
-                color=0x00ff00
-            )
-            embed.add_field(name="Key Link", value=key_url, inline=False)
+                embed = discord.Embed(
+                    title="YuB-X Key System",
+                    description="Click the button below to get your key.",
+                    color=0x00ff00
+                )
 
-            await ctx.reply(embed=embed)
+                await message.reply(embed=embed, view=KeyButtonView(key_url))
+            else:
+                await message.reply("Could not find `sub_id` in the link.")
 
-        else:
-            await ctx.reply("Could not find `sub_id`.")
+        except Exception:
+            await message.reply("Error processing the link.")
 
-    except Exception as e:
-        await ctx.reply(f"Error: {str(e)[:300]}")
+    # Optional: Warn about non-YuB-X links
+    elif "links.lootlabs.gg" in content:
+        await message.reply("Not YuB-X keysystem, please try again.")
 
 bot.run(os.getenv("DISCORD_TOKEN"))
