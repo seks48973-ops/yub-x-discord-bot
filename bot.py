@@ -1,7 +1,7 @@
 import discord
 import os
+import re
 from discord.ext import commands
-from urllib.parse import urlparse, parse_qs
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -32,24 +32,14 @@ async def bypass(ctx, *, link: str = None):
         return
 
     try:
-        # Clean the link
-        if link.startswith('<') and link.endswith('>'):
-            link = link[1:-1]
-
-        parsed = urlparse(link)
-        query = parsed.query
-
-        # Handle both &sub_id= and sub_id= formats
-        if "sub_id=" in query:
-            sub_id_part = query.split("sub_id=")[1].split("&")[0]
-            sub_id = sub_id_part.strip()
-        else:
-            await ctx.reply("Could not find sub_id in the link.")
+        # Try to extract sub_id using regex (more reliable for long links)
+        sub_id_match = re.search(r'sub_id=([^&\s]+)', link)
+        
+        if not sub_id_match:
+            await ctx.reply("Could not find `sub_id` in the link.")
             return
 
-        if not sub_id:
-            await ctx.reply("Could not find sub_id in the link.")
-            return
+        sub_id = sub_id_match.group(1)
 
         key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
 
@@ -58,6 +48,7 @@ async def bypass(ctx, *, link: str = None):
             description="Click the button below to get your key.",
             color=0x00ff00
         )
+        embed.add_field(name="Status", value="Valid link detected ✅", inline=False)
 
         await ctx.reply(embed=embed, view=KeyButtonView(key_url))
 
