@@ -6,7 +6,7 @@ from urllib.parse import urlparse, parse_qs
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)  # Change to "$" if you want $bypass
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 class KeyButtonView(discord.ui.View):
     def __init__(self, key_url: str):
@@ -24,7 +24,7 @@ async def on_ready():
 @bot.command(name="bypass")
 async def bypass(ctx, *, link: str = None):
     if not link:
-        await ctx.reply("Please provide a link. Example: `!bypass https://links.lootlabs.gg/...`")
+        await ctx.reply("Usage: `!bypass [full link]`")
         return
 
     if "zoaTgCxk" not in link:
@@ -32,12 +32,23 @@ async def bypass(ctx, *, link: str = None):
         return
 
     try:
+        # Clean the link
+        if link.startswith('<') and link.endswith('>'):
+            link = link[1:-1]
+
         parsed = urlparse(link)
-        query_params = parse_qs(parsed.query)
-        sub_id = query_params.get("sub_id", [None])[0]
+        query = parsed.query
+
+        # Handle both &sub_id= and sub_id= formats
+        if "sub_id=" in query:
+            sub_id_part = query.split("sub_id=")[1].split("&")[0]
+            sub_id = sub_id_part.strip()
+        else:
+            await ctx.reply("Could not find sub_id in the link.")
+            return
 
         if not sub_id:
-            await ctx.reply("Invalid link: No `sub_id` found.")
+            await ctx.reply("Could not find sub_id in the link.")
             return
 
         key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
@@ -47,11 +58,11 @@ async def bypass(ctx, *, link: str = None):
             description="Click the button below to get your key.",
             color=0x00ff00
         )
-        embed.add_field(name="Status", value="Valid YuB-X link detected ✅", inline=False)
 
         await ctx.reply(embed=embed, view=KeyButtonView(key_url))
 
-    except Exception:
+    except Exception as e:
         await ctx.reply("Error processing the link.")
+        print(f"Error: {e}")
 
 bot.run(os.getenv("DISCORD_TOKEN"))
