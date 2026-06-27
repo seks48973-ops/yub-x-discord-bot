@@ -26,13 +26,16 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
 
-    content = message.content
+    content = message.content.strip()
 
-    # Auto-detect lootlabs links
     if "links.lootlabs.gg" in content and "zoaTgCxk" in content:
         try:
-            # Extract sub_id
+            # More flexible sub_id extraction
             sub_id_match = re.search(r'sub_id=([^&\s]+)', content)
+            
+            if not sub_id_match:
+                # Try alternative patterns
+                sub_id_match = re.search(r'[?&]sub_id=([^&\s]+)', content)
             
             if sub_id_match:
                 sub_id = sub_id_match.group(1)
@@ -46,12 +49,12 @@ async def on_message(message: discord.Message):
 
                 await message.reply(embed=embed, view=KeyButtonView(key_url))
             else:
-                await message.reply("Could not find `sub_id` in the link.")
+                await message.reply("Found lootlabs link but could not extract `sub_id`.")
 
-        except Exception:
+        except Exception as e:
             await message.reply("Error processing the link.")
+            print(f"Error: {e}")
 
-    # Optional: Warn about non-YuB-X links
     elif "links.lootlabs.gg" in content:
         await message.reply("Not YuB-X keysystem, please try again.")
 
