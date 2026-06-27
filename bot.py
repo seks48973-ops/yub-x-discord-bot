@@ -15,13 +15,11 @@ async def on_ready():
 @bot.command(name="bypass")
 async def bypass(ctx, *, link: str = None):
     if not link:
-        await ctx.reply("Usage: `!bypass [link]`")
+        await ctx.reply("Usage: `!bypass [full link]`")
         return
 
-    await ctx.reply(f"Debug: Link received ({len(link)} characters)")
-
     if "zoaTgCxk" not in link:
-        await ctx.reply("Not YuB-X keysystem.")
+        await ctx.reply("Not YuB-X keysystem, please try again.")
         return
 
     try:
@@ -29,16 +27,22 @@ async def bypass(ctx, *, link: str = None):
         
         if sub_id_match:
             sub_id = sub_id_match.group(1)
-            await ctx.reply(f"Found sub_id: `{sub_id[:50]}...`")  # Show part of it
             
             key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
-            view = discord.ui.View()
-            view.add_item(discord.ui.Button(label="Get Key", style=discord.ButtonStyle.green, url=key_url))
-            await ctx.reply("Here is your key link:", view=view)
+
+            embed = discord.Embed(
+                title="YuB-X Key System",
+                description="Here is your bypass link:",
+                color=0x00ff00
+            )
+            embed.add_field(name="Key Link", value=key_url, inline=False)
+
+            await ctx.reply(embed=embed)
+
         else:
-            await ctx.reply("Could not find `sub_id` in the link. Please send the full link.")
+            await ctx.reply("Could not find `sub_id`.")
 
     except Exception as e:
-        await ctx.reply(f"Error: {str(e)[:500]}")
+        await ctx.reply(f"Error: {str(e)[:300]}")
 
 bot.run(os.getenv("DISCORD_TOKEN"))
