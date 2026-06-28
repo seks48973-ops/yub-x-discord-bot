@@ -1,6 +1,7 @@
 import discord
 import os
 import re
+import io
 from discord import app_commands
 from discord.ext import commands
 
@@ -44,7 +45,6 @@ USERSCRIPT_CODE = """// ==UserScript==
     setTimeout(addButton, 3000);
 })();"""
 
-# ================== VIEW ==================
 class UserscriptView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
@@ -56,7 +56,9 @@ class UserscriptView(discord.ui.View):
 
     @discord.ui.button(label="📥 Download .js", style=discord.ButtonStyle.green)
     async def download(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
+        file_bytes = io.BytesIO(USERSCRIPT_CODE.encode('utf-8'))
+        file = discord.File(file_bytes, filename="yub-x-lootlabs-bypass.user.js")
+        await interaction.response.send_message("✅ Here is your userscript file:", file=file, ephemeral=True)
 
     @discord.ui.button(label="📋 Copy Code", style=discord.ButtonStyle.gray)
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -70,7 +72,7 @@ async def on_ready():
     except Exception as e:
         print(f"Sync error: {e}")
 
-# Auto-detect links (kept)
+# Auto-detect links
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -100,12 +102,12 @@ async def on_message(message: discord.Message):
 async def userscript(interaction: discord.Interaction):
     embed = discord.Embed(
         title="🛠️ YuB-X LootLabs Userscript",
-        description="Automatically adds a **Get YuB-X Key** button on lootlabs.gg pages.",
+        description="Automatically adds a **Get YuB-X Key** button when visiting lootlabs.gg pages.",
         color=0x00ff00
     )
     embed.add_field(
-        name="How to use:",
-        value="1. Click **Tampermonkey**\n2. Click **Download .js** or **Copy Code**\n3. Paste into Tampermonkey",
+        name="How to install:",
+        value="1. Click **Tampermonkey**\n2. Click **Download .js**\n3. Install in Tampermonkey",
         inline=False
     )
 
