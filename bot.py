@@ -1,6 +1,7 @@
 import discord
 import os
 import re
+from discord import app_commands
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -47,7 +48,6 @@ USERSCRIPT_CODE = """// ==UserScript==
 class UserscriptView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
-        # Tampermonkey URL Button
         self.add_item(discord.ui.Button(
             label="🔧 Tampermonkey",
             style=discord.ButtonStyle.blurple,
@@ -64,9 +64,13 @@ class UserscriptView(discord.ui.View):
 
 @bot.event
 async def on_ready():
-    print(f"✅ Bot is online as {bot.user}")
+    try:
+        synced = await bot.tree.sync()
+        print(f"✅ Bot is online as {bot.user} | Synced {len(synced)} slash commands")
+    except Exception as e:
+        print(f"Sync error: {e}")
 
-# Auto-detect links
+# Auto-detect links (kept)
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -91,20 +95,20 @@ async def on_message(message: discord.Message):
         except:
             pass
 
-# !userscript command
-@bot.command(name="userscript")
-async def userscript(ctx):
+# Slash Command
+@bot.tree.command(name="userscript", description="Get the YuB-X LootLabs Userscript")
+async def userscript(interaction: discord.Interaction):
     embed = discord.Embed(
         title="🛠️ YuB-X LootLabs Userscript",
         description="Automatically adds a **Get YuB-X Key** button on lootlabs.gg pages.",
         color=0x00ff00
     )
     embed.add_field(
-        name="How to install:",
-        value="1. Click **Tampermonkey**\n2. Click **Download .js** or **Copy Code**\n3. Paste in Tampermonkey",
+        name="How to use:",
+        value="1. Click **Tampermonkey**\n2. Click **Download .js** or **Copy Code**\n3. Paste into Tampermonkey",
         inline=False
     )
 
-    await ctx.reply(embed=embed, view=UserscriptView())
+    await interaction.response.send_message(embed=embed, view=UserscriptView())
 
 bot.run(os.getenv("DISCORD_TOKEN"))
