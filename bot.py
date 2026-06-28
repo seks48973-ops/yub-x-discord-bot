@@ -8,7 +8,7 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ================== USERSCRIPT CODE ==================
+# Userscript Code
 USERSCRIPT_CODE = """// ==UserScript==
 // @name         YuB-X LootLabs Bypass Button
 // @namespace    http://tampermonkey.net/
@@ -22,18 +22,15 @@ USERSCRIPT_CODE = """// ==UserScript==
 
 (function() {
     'use strict';
-
     function getSubId() {
         const url = window.location.href;
         const match = url.match(/sub_id=([^&\\s]+)/);
         return match ? match[1] : null;
     }
-
     function addButton() {
         if (document.getElementById('yubx-bypass-button')) return;
         const subId = getSubId();
         if (!subId) return;
-
         const bypassUrl = `https://yub-x.best/get-key?rn=true&c=${encodeURIComponent(subId)}`;
         const button = document.createElement('button');
         button.id = 'yubx-bypass-button';
@@ -42,34 +39,31 @@ USERSCRIPT_CODE = """// ==UserScript==
         button.onclick = () => window.open(bypassUrl, '_blank');
         document.body.appendChild(button);
     }
-
     setTimeout(addButton, 1000);
     setTimeout(addButton, 3000);
 })();"""
 
-# ================== USERScript VIEW ==================
 class UserscriptView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
 
     @discord.ui.button(label="📥 Download .js", style=discord.ButtonStyle.green)
     async def download(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("```js\n" + USERSCRIPT_CODE + "\n```", ephemeral=True)
+        await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
 
     @discord.ui.button(label="📋 Copy Code", style=discord.ButtonStyle.gray)
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("```js\n" + USERSCRIPT_CODE + "\n```", ephemeral=True)
+        await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
 
     @discord.ui.button(label="🔧 Tampermonkey", style=discord.ButtonStyle.blurple, url="https://tampermonkey.net/")
     async def tampermonkey(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
 
-# ================== BOT EVENTS ==================
 @bot.event
 async def on_ready():
     print(f"✅ Bot is online as {bot.user}")
 
-# Auto-detect lootlabs links
+# Auto-detect links
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -90,30 +84,18 @@ async def on_message(message: discord.Message):
                     color=0x00ff00
                 )
                 embed.add_field(name="Key Link", value=key_url, inline=False)
-
                 await message.reply(embed=embed)
-            else:
-                await message.reply("Could not extract sub_id.")
         except:
-            await message.reply("Error processing the link.")
-
-    elif "links.lootlabs.gg" in content:
-        await message.reply("Not YuB-X keysystem, please try again.")
+            pass  # Silent fail
 
 # !userscript command
 @bot.command(name="userscript")
 async def userscript(ctx):
     embed = discord.Embed(
         title="🛠️ YuB-X LootLabs Userscript",
-        description="This userscript adds a **Get YuB-X Key** button automatically on lootlabs.gg pages.",
+        description="Automatically adds a bypass button on lootlabs.gg pages.",
         color=0x00ff00
     )
-    embed.add_field(
-        name="Installation Steps",
-        value="1. Install Tampermonkey\n2. Click Download or Copy\n3. Paste into Tampermonkey",
-        inline=False
-    )
-
     await ctx.reply(embed=embed, view=UserscriptView())
 
 bot.run(os.getenv("DISCORD_TOKEN"))
