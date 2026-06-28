@@ -8,7 +8,7 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Userscript Code
+# ================== USERSCRIPT ==================
 USERSCRIPT_CODE = """// ==UserScript==
 // @name         YuB-X LootLabs Bypass Button
 // @namespace    http://tampermonkey.net/
@@ -43,6 +43,7 @@ USERSCRIPT_CODE = """// ==UserScript==
     setTimeout(addButton, 3000);
 })();"""
 
+# ================== VIEW ==================
 class UserscriptView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
@@ -55,9 +56,15 @@ class UserscriptView(discord.ui.View):
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
 
-    @discord.ui.button(label="🔧 Tampermonkey", style=discord.ButtonStyle.blurple, url="https://tampermonkey.net/")
-    async def tampermonkey(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass
+    # URL Button (correct way)
+    def __init__(self):
+        super().__init__(timeout=600)
+        # Add URL button manually
+        self.add_item(discord.ui.Button(
+            label="🔧 Tampermonkey",
+            style=discord.ButtonStyle.blurple,
+            url="https://tampermonkey.net/"
+        ))
 
 @bot.event
 async def on_ready():
@@ -86,7 +93,7 @@ async def on_message(message: discord.Message):
                 embed.add_field(name="Key Link", value=key_url, inline=False)
                 await message.reply(embed=embed)
         except:
-            pass  # Silent fail
+            pass
 
 # !userscript command
 @bot.command(name="userscript")
