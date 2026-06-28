@@ -8,7 +8,7 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ================== USERSCRIPT ==================
+# ================== USERSCRIPT CODE ==================
 USERSCRIPT_CODE = """// ==UserScript==
 // @name         YuB-X LootLabs Bypass Button
 // @namespace    http://tampermonkey.net/
@@ -47,6 +47,12 @@ USERSCRIPT_CODE = """// ==UserScript==
 class UserscriptView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
+        # Tampermonkey URL Button
+        self.add_item(discord.ui.Button(
+            label="🔧 Tampermonkey",
+            style=discord.ButtonStyle.blurple,
+            url="https://tampermonkey.net/"
+        ))
 
     @discord.ui.button(label="📥 Download .js", style=discord.ButtonStyle.green)
     async def download(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -55,16 +61,6 @@ class UserscriptView(discord.ui.View):
     @discord.ui.button(label="📋 Copy Code", style=discord.ButtonStyle.gray)
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
-
-    # URL Button (correct way)
-    def __init__(self):
-        super().__init__(timeout=600)
-        # Add URL button manually
-        self.add_item(discord.ui.Button(
-            label="🔧 Tampermonkey",
-            style=discord.ButtonStyle.blurple,
-            url="https://tampermonkey.net/"
-        ))
 
 @bot.event
 async def on_ready():
@@ -100,9 +96,15 @@ async def on_message(message: discord.Message):
 async def userscript(ctx):
     embed = discord.Embed(
         title="🛠️ YuB-X LootLabs Userscript",
-        description="Automatically adds a bypass button on lootlabs.gg pages.",
+        description="Automatically adds a **Get YuB-X Key** button on lootlabs.gg pages.",
         color=0x00ff00
     )
+    embed.add_field(
+        name="How to install:",
+        value="1. Click **Tampermonkey**\n2. Click **Download .js** or **Copy Code**\n3. Paste in Tampermonkey",
+        inline=False
+    )
+
     await ctx.reply(embed=embed, view=UserscriptView())
 
 bot.run(os.getenv("DISCORD_TOKEN"))
