@@ -71,7 +71,7 @@ class UserscriptView(discord.ui.View):
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
 
-# ================== STATUS CHECKING ==================
+# ================== STATUS FUNCTIONS ==================
 async def check_yubx_status():
     try:
         async with aiohttp.ClientSession() as session:
@@ -93,6 +93,7 @@ async def check_roblox_version():
     except:
         return "📌 **Roblox Version:** Unable to fetch"
 
+# ================== BACKGROUND STATUS UPDATER ==================
 async def update_status_channels():
     await bot.wait_until_ready()
     while True:
@@ -190,5 +191,23 @@ async def userscript(interaction: discord.Interaction):
         inline=False
     )
     await interaction.response.send_message(embed=embed, view=UserscriptView())
+
+# /status command
+@bot.tree.command(name="status", description="Check current Yub-X and Roblox status")
+async def status(interaction: discord.Interaction):
+    await interaction.response.defer()
+    
+    yubx_status = await check_yubx_status()
+    roblox_status = await check_roblox_version()
+
+    embed = discord.Embed(
+        title="📊 Current Status",
+        color=0x00ff00
+    )
+    embed.add_field(name="Yub-X Status", value=yubx_status, inline=False)
+    embed.add_field(name="Roblox", value=roblox_status, inline=False)
+    embed.set_footer(text="Updated automatically every 5 minutes in the status channels")
+
+    await interaction.followup.send(embed=embed)
 
 bot.run(os.getenv("DISCORD_TOKEN"))
