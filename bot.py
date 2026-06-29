@@ -58,7 +58,7 @@ class UserscriptView(discord.ui.View):
     async def download(self, interaction: discord.Interaction, button: discord.ui.Button):
         file_bytes = io.BytesIO(USERSCRIPT_CODE.encode('utf-8'))
         file = discord.File(file_bytes, filename="yub-x-lootlabs-bypass.user.js")
-        await interaction.response.send_message("✅ Here is your userscript file:", file=file, ephemeral=True)
+        await interaction.response.send_message("✅ Here is your userscript:", file=file, ephemeral=True)
 
     @discord.ui.button(label="📋 Copy Code", style=discord.ButtonStyle.gray)
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -72,7 +72,7 @@ async def on_ready():
     except Exception as e:
         print(f"Sync error: {e}")
 
-# Auto-detect links
+# ================== AUTO DETECT LINKS ==================
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -97,17 +97,43 @@ async def on_message(message: discord.Message):
         except:
             pass
 
-# Slash Command
+# ================== SLASH COMMAND /bypass ==================
+@bot.tree.command(name="bypass", description="Bypass a lootlabs.gg link")
+@app_commands.describe(link="The full lootlabs.gg link")
+async def bypass(interaction: discord.Interaction, link: str):
+    if "zoaTgCxk" not in link:
+        await interaction.response.send_message("Not YuB-X keysystem, please try again.", ephemeral=True)
+        return
+
+    try:
+        sub_id_match = re.search(r'sub_id=([^&\s]+)', link)
+        if sub_id_match:
+            sub_id = sub_id_match.group(1)
+            key_url = f"https://yub-x.best/get-key?rn=true&c={sub_id}"
+
+            embed = discord.Embed(
+                title="YuB-X Key System",
+                description="Here is your bypass link:",
+                color=0x00ff00
+            )
+            embed.add_field(name="Key Link", value=key_url, inline=False)
+            await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message("Could not find `sub_id` in the link.", ephemeral=True)
+    except:
+        await interaction.response.send_message("Error processing the link.", ephemeral=True)
+
+# ================== /userscript ==================
 @bot.tree.command(name="userscript", description="Get the YuB-X LootLabs Userscript")
 async def userscript(interaction: discord.Interaction):
     embed = discord.Embed(
         title="🛠️ YuB-X LootLabs Userscript",
-        description="Automatically adds a **Get YuB-X Key** button when visiting lootlabs.gg pages.",
+        description="Automatically adds a **Get YuB-X Key** button on lootlabs.gg pages.",
         color=0x00ff00
     )
     embed.add_field(
         name="How to install:",
-        value="1. Click **Tampermonkey**\n2. Click **Download .js**\n3. Install in Tampermonkey",
+        value="1. Click **Tampermonkey**\n2. Click **Download .js**\n3. Paste in Tampermonkey",
         inline=False
     )
 
