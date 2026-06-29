@@ -2,6 +2,8 @@ import discord
 import os
 import re
 import io
+import asyncio
+import aiohttp
 from discord import app_commands
 from discord.ext import commands
 
@@ -9,6 +11,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# ================== CHANNEL IDS ==================
+YUBX_STATUS_CHANNEL_ID = 1517123238331940924
+ROBLOX_VERSION_CHANNEL_ID = 1517137352034881556
 
 # ================== USERSCRIPT CODE ==================
 USERSCRIPT_CODE = """// ==UserScript==
@@ -45,6 +51,7 @@ USERSCRIPT_CODE = """// ==UserScript==
     setTimeout(addButton, 3000);
 })();"""
 
+# ================== VIEWS ==================
 class UserscriptView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
@@ -64,6 +71,50 @@ class UserscriptView(discord.ui.View):
     async def copy(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(f"```js\n{USERSCRIPT_CODE}\n```", ephemeral=True)
 
+# ================== STATUS CHECKING ==================
+async def check_yubx_status():
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://yub-x.best", timeout=10) as resp:
+                return "🟢 **Yub-X is UP**" if resp.status == 200 else "🔴 **Yub-X is DOWN**"
+    except:
+        return "⚠️ **Yub-X Status Check Failed**"
+
+async def check_roblox_version():
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://clientsettingscdn.roblox.com/v1/clientVersion/WindowsPlayer", timeout=10) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    version = data.get("version", "Unknown")
+                    return f"📌 **Roblox Version:** {version}"
+                else:
+                    return "📌 **Roblox Version:** Checking..."
+    except:
+        return "📌 **Roblox Version:** Unable to fetch"
+
+async def update_status_channels():
+    await bot.wait_until_ready()
+    while True:
+        try:
+            yubx_status = await check_yubx_status()
+            roblox_status = await check_roblox_version()
+
+            channel1 = bot.get_channel(YUBX_STATUS_CHANNEL_ID)
+            if channel1:
+                await channel1.purge(limit=5)
+                await channel1.send(yubx_status)
+
+            channel2 = bot.get_channel(ROBLOX_VERSION_CHANNEL_ID)
+            if channel2:
+                await channel2.purge(limit=5)
+                await channel2.send(roblox_status)
+        except Exception as e:
+            print(f"Status update error: {e}")
+
+        await asyncio.sleep(300)  # Every 5 minutes
+
+# ================== EVENTS ==================
 @bot.event
 async def on_ready():
     try:
@@ -71,8 +122,10 @@ async def on_ready():
         print(f"✅ Bot is online as {bot.user} | Synced {len(synced)} slash commands")
     except Exception as e:
         print(f"Sync error: {e}")
+    
+    bot.loop.create_task(update_status_channels())
 
-# ================== AUTO DETECT LINKS ==================
+# Auto-detect links
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -97,7 +150,7 @@ async def on_message(message: discord.Message):
         except:
             pass
 
-# ================== SLASH COMMAND /bypass ==================
+# /bypass command
 @bot.tree.command(name="bypass", description="Bypass a lootlabs.gg link")
 @app_commands.describe(link="The full lootlabs.gg link")
 async def bypass(interaction: discord.Interaction, link: str):
@@ -123,7 +176,7 @@ async def bypass(interaction: discord.Interaction, link: str):
     except:
         await interaction.response.send_message("Error processing the link.", ephemeral=True)
 
-# ================== /userscript ==================
+# /userscript command
 @bot.tree.command(name="userscript", description="Get the YuB-X LootLabs Userscript")
 async def userscript(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -136,7 +189,6 @@ async def userscript(interaction: discord.Interaction):
         value="1. Click **Tampermonkey**\n2. Click **Download .js**\n3. Paste in Tampermonkey",
         inline=False
     )
-
     await interaction.response.send_message(embed=embed, view=UserscriptView())
 
 bot.run(os.getenv("DISCORD_TOKEN"))
